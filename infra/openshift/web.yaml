@@ -1,0 +1,55 @@
+# The website. Image built and published by this repository's GitHub Actions
+# workflow to ghcr.io; the version is pinned in kustomization.yaml (`images:`).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sila-web
+  labels: { app: sila-web }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: sila-web }
+  template:
+    metadata:
+      labels: { app: sila-web }
+    spec:
+      containers:
+        - name: sila-web
+          image: ghcr.io/mojahid-souti/sila-lite-web
+          ports:
+            - containerPort: 3002
+          readinessProbe:
+            httpGet: { path: /login, port: 3002 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket: { port: 3002 }
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits: { memory: 512Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sila-web
+spec:
+  selector: { app: sila-web }
+  ports:
+    - { name: http, port: 3002, targetPort: 3002 }
+---
+# The website's half of the public hostname: / (the backend repository routes
+# /v1 on the same host). TLS terminates at the router; HTTP → HTTPS.
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: sila-web
+spec:
+  host: PUBLIC_HOST
+  path: /
+  to: { kind: Service, name: sila-web }
+  port: { targetPort: http }
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect

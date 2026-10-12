@@ -1,0 +1,26 @@
+# Sila Lite frontend on OpenShift:  oc apply -k .
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: sila-lite
+
+resources:
+  - infra/openshift/config.yaml
+  - infra/openshift/web.yaml
+
+# The version the website runs. Images are published by this repository's
+# GitHub Actions workflow (tag vX.Y.Z → image tag X.Y.Z).
+images:
+  - name: ghcr.io/mojahid-souti/sila-lite-web
+    newTag: "1.0.0"
+
+replacements:
+  - source:
+      kind: ConfigMap
+      name: sila-web-config
+      fieldPath: data.PUBLIC_HOST
+    targets:
+      - select: { kind: Route }
+        fieldPaths: [spec.host]

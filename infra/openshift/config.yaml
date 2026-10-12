@@ -1,0 +1,10 @@
+# The only file to edit per installation. PUBLIC_HOST must match the backend
+# repository's config (both Routes share one hostname: / here, /v1 there).
+# The address the website calls is baked into the image when it is built —
+# see the PUBLIC_URL repository variable in .github/workflows/ci.yml.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sila-web-config
+data:
+  PUBLIC_HOST: sila.omantel.om
